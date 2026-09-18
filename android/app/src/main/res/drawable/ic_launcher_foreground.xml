@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Передний слой иконки приложения: страница календаря.
+
+  Холст адаптивной иконки — 108 на 108, но система обрезает его по фигуре
+  запуска: круг, квадрат, «капля». Всё, что должно уцелеть при любой обрезке,
+  лежит в центральном квадрате от 18 до 90 — страница занимает 28..80, то есть
+  остаётся целой и в круге.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Страница: белый лист со скруглёнными углами. -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M34,30 H74 A6,6 0 0 1 80,36 V76 A6,6 0 0 1 74,82 H34 A6,6 0 0 1 28,76 V36 A6,6 0 0 1 34,30 Z" />
+
+    <!-- Шапка листа: тот же верхний контур, вниз до 46. -->
+    <path
+        android:fillColor="@color/ic_launcher_header"
+        android:pathData="M34,30 H74 A6,6 0 0 1 80,36 V46 H28 V36 A6,6 0 0 1 34,30 Z" />
+
+    <!-- Кольца пружины над листом. -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="4"
+        android:strokeLineCap="round"
+        android:pathData="M40,22 L40,34" />
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="4"
+        android:strokeLineCap="round"
+        android:pathData="M68,22 L68,34" />
+
+    <!-- Дни: две недели по три дня. -->
+    <path
+        android:fillColor="@color/ic_launcher_background"
+        android:pathData="M36.5,58 a3.5,3.5 0 1 0 7,0 a3.5,3.5 0 1 0 -7,0 z" />
+    <path
+        android:fillColor="@color/ic_launcher_background"
+        android:pathData="M50.5,58 a3.5,3.5 0 1 0 7,0 a3.5,3.5 0 1 0 -7,0 z" />
+    <path
+        android:fillColor="@color/ic_launcher_background"
+        android:pathData="M64.5,58 a3.5,3.5 0 1 0 7,0 a3.5,3.5 0 1 0 -7,0 z" />
+    <path
+        android:fillColor="@color/ic_launcher_background"
+        android:pathData="M36.5,70 a3.5,3.5 0 1 0 7,0 a3.5,3.5 0 1 0 -7,0 z" />
+    <path
+        android:fillColor="@color/ic_launcher_background"
+        android:pathData="M50.5,70 a3.5,3.5 0 1 0 7,0 a3.5,3.5 0 1 0 -7,0 z" />
+    <path
+        android:fillColor="@color/ic_launcher_background"
+        android:pathData="M64.5,70 a3.5,3.5 0 1 0 7,0 a3.5,3.5 0 1 0 -7,0 z" />
+</vector>

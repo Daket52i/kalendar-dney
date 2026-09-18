@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Календарь дней</string>
+
+    <string name="today_title">Сегодня</string>
+    <string name="today_hint">Открыв приложение, сразу читай эту строку — здесь всё главное.</string>
+
+    <string name="btn_start">Начались месячные</string>
+    <string name="btn_start_hint">Отметить первый день</string>
+    <string name="btn_finish">Закончились</string>
+    <string name="btn_finish_hint">Отметить последний день</string>
+    <string name="btn_month">Календарь на месяц</string>
+    <string name="btn_month_hint">Все дни месяца по строкам</string>
+    <string name="btn_diary">Дневник самочувствия</string>
+    <string name="btn_diary_hint">Боль, настроение, температура, заметки</string>
+    <string name="btn_settings">Напоминания и настройки</string>
+    <string name="btn_settings_hint">Что и когда напоминать</string>
+    <string name="btn_history">История циклов</string>
+    <string name="btn_history_hint">Что показывают врачу</string>
+    <string name="btn_note">Что приложение не умеет</string>
+    <string name="btn_note_hint">Важное предупреждение</string>
+    <string name="btn_back">Назад к сегодняшнему дню</string>
+
+    <string name="month_prev">Предыдущий месяц</string>
+    <string name="month_next">Следующий месяц</string>
+
+    <string name="marked_start">Отмечено: начались. Когда закончатся — нажми кнопку «Закончились».</string>
+    <string name="marked_start_twice">Первый день уже отмечен сегодня.</string>
+    <string name="marked_finish">Отмечено: закончились.</string>
+    <string name="marked_finish_none">Незакрытой отметки нет — сначала нажми «Начались месячные».</string>
+    <string name="error_save">Не удалось сохранить отметку. Попробуй ещё раз.</string>
+
+    <!-- Дневник -->
+    <string name="diary_title">Дневник самочувствия</string>
+    <string name="diary_hint">Заполнять всё не обязательно. Отмечай только то, что хочется: запись за день сохраняется целиком и её всегда можно поправить.</string>
+    <string name="diary_day_hint">День, за который запись</string>
+    <string name="diary_prev_day">Предыдущий день</string>
+    <string name="diary_next_day">Следующий день</string>
+    <string name="diary_today">Сегодняшний день</string>
+    <string name="diary_pain">Боль</string>
+    <string name="diary_mood">Настроение</string>
+    <string name="diary_flow">Выделения</string>
+    <string name="diary_temp_on">Измеряла базальную температуру</string>
+    <string name="diary_temp">Температура</string>
+    <string name="diary_pill">Таблетка</string>
+    <string name="diary_note">Заметка</string>
+    <string name="diary_note_hint">Например: болела голова, выпила обезболивающее</string>
+    <string name="diary_save">Сохранить запись</string>
+    <string name="diary_saved">Запись сохранена.</string>
+    <string name="diary_clear">Очистить этот день</string>
+    <string name="diary_cleared">Запись за этот день убрана.</string>
+    <string name="diary_nothing_to_clear">За этот день записи нет — чистить нечего.</string>
+    <string name="diary_back">Назад к записи</string>
+    <string name="diary_no_future">Дальше сегодняшнего дня дневник не ведут.</string>
+    <string name="diary_summary">Что видно по дневнику</string>
+    <string name="diary_list_title">Записи дневника</string>
+
+    <string-array name="diary_pain_choices">
+        <item>не отмечено</item>
+        <item>1 — почти не болит</item>
+        <item>2 — слабая</item>
+        <item>3 — заметная</item>
+        <item>4 — сильная</item>
+        <item>5 — очень сильная</item>
+    </string-array>
+
+    <string-array name="diary_mood_choices">
+        <item>не отмечено</item>
+        <item>спокойное</item>
+        <item>радостное</item>
+        <item>обычное</item>
+        <item>усталое</item>
+        <item>раздражённое</item>
+        <item>тревожное</item>
+        <item>плаксивое</item>
+        <item>болит голова</item>
+    </string-array>
+
+    <string-array name="diary_flow_choices">
+        <item>не отмечено</item>
+        <item>нет</item>
+        <item>слабые</item>
+        <item>обычные</item>
+        <item>сильные</item>
+    </string-array>
+
+    <string-array name="diary_pill_choices">
+        <item>не отмечено</item>
+        <item>выпила</item>
+        <item>не выпила</item>
+    </string-array>
+
+    <!-- Настройки и напоминания -->
+    <string name="settings_title">Напоминания</string>
+    <string name="settings_hint">Напоминание приходит уведомлением. В уведомлении не написано ничего лишнего: только «Календарь дней» и что напоминание ждёт внутри приложения — на случай, если телефон увидят другие.</string>
+    <string name="settings_days_before">За сколько дней предупреждать о месячных</string>
+    <string name="settings_on_day">Напоминать в ожидаемый день</string>
+    <string name="settings_delay">Через сколько дней задержки напомнить</string>
+    <string name="settings_fertile">Сообщать о начале фертильных дней</string>
+    <string name="settings_pill_on">Напоминать про таблетку</string>
+    <string name="settings_pill_hour">Час напоминания о таблетке</string>
+    <string name="settings_quiet_from">Тихие часы: с какого часа молчать</string>
+    <string name="settings_quiet_to">Тихие часы: до какого часа молчать</string>
+    <string name="settings_save">Сохранить настройки</string>
+    <string name="settings_saved">Настройки сохранены.</string>
+    <string name="settings_zero_hint">Ноль означает «не напоминать».</string>
+    <string name="settings_permission">Разреши уведомления, иначе напоминания не смогут прийти.</string>
+    <string name="settings_notifications">Разрешить уведомления</string>
+    <string name="settings_notifications_ok">Уведомления разрешены.</string>
+    <string name="settings_range">Число вне границ. Часы — от 0 до 23, дни — от 0 до 14.</string>
+    <string name="error_temperature">Температуру пиши цифрами, например 36,6.</string>
+    <string name="settings_check">Что напомнит дальше</string>
+    <string name="notify_text">Есть напоминание — открой приложение.</string>
+    <string name="reminders_title">Ближайшие напоминания</string>
+    <string name="reminders_empty">В ближайшие дни напоминаний нет.</string>
+</resources>

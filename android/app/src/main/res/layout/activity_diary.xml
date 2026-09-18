@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Дневник: обычные поля Android, TalkBack читает их сам.
+     Обязательных полей нет — пустая запись это нормально. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <ScrollView
+        android:id="@+id/diaryScroll"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/diary_title"
+                android:textSize="22sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="@string/diary_hint"
+                android:textSize="16sp" />
+
+            <!-- Дату и итог приложение проговаривает само, вслух, сразу после
+                 нажатия. Живой регион здесь был бы вторым голосом на ту же
+                 строку, поэтому его нет. -->
+            <TextView
+                android:id="@+id/diaryDate"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:focusable="true"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/diaryPrevDay"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:minHeight="56dp"
+                    android:text="@string/diary_prev_day" />
+
+                <Button
+                    android:id="@+id/diaryNextDay"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:minHeight="56dp"
+                    android:text="@string/diary_next_day" />
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/diaryToday"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="56dp"
+                android:text="@string/diary_today" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="@string/diary_pain"
+                android:textSize="18sp" />
+
+            <Spinner
+                android:id="@+id/diaryPain"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="56dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="@string/diary_mood"
+                android:textSize="18sp" />
+
+            <Spinner
+                android:id="@+id/diaryMood"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="56dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="@string/diary_flow"
+                android:textSize="18sp" />
+
+            <Spinner
+                android:id="@+id/diaryFlow"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="56dp" />
+
+            <CheckBox
+                android:id="@+id/diaryTempOn"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:minHeight="56dp"
+                android:text="@string/diary_temp_on" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/diary_temp"
+                android:textSize="18sp" />
+
+            <EditText
+                android:id="@+id/diaryTemp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:importantForAutofill="no"
+                android:inputType="numberDecimal"
+                android:minHeight="56dp"
+                android:textSize="20sp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="@string/diary_pill"
+                android:textSize="18sp" />
+
+            <Spinner
+                android:id="@+id/diaryPill"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="56dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="@string/diary_note"
+                android:textSize="18sp" />
+
+            <EditText
+                android:id="@+id/diaryNote"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/diary_note_hint"
+                android:importantForAutofill="no"
+                android:inputType="text"
+                android:minHeight="56dp"
+                android:textSize="20sp" />
+
+            <Button
+                android:id="@+id/diarySave"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:minHeight="56dp"
+                android:text="@string/diary_save" />
+
+            <Button
+                android:id="@+id/diaryClear"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="56dp"
+                android:text="@string/diary_clear" />
+
+            <Button
+                android:id="@+id/diarySummaryBtn"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="56dp"
+                android:text="@string/diary_summary" />
+
+            <!-- Итог по дневнику: то же самое, только текстом — чтобы можно
+                 было вернуться и перечитать свайпом. -->
+            <TextView
+                android:id="@+id/diarySummaryText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:focusable="true"
+                android:textSize="18sp" />
+
+            <Button
+                android:id="@+id/diaryShowList"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:minHeight="56dp"
+                android:text="@string/diary_list_title" />
+        </LinearLayout>
+    </ScrollView>
+
+    <!-- Список записей открывается вместо формы: строки читаются свайпом,
+         каждая строка — одна запись целиком. -->
+    <LinearLayout
+        android:id="@+id/diaryListPanel"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/diaryListTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:focusable="true"
+            android:text="@string/diary_list_title"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <ListView
+            android:id="@+id/diaryList"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <Button
+            android:id="@+id/diaryBack"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="56dp"
+            android:text="@string/diary_back" />
+    </LinearLayout>
+</LinearLayout>

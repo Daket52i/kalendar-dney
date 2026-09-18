@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Тёмная тема и крупный текст по умолчанию: приложение делается для
+         незрячих, но остаточное зрение — частый случай, и ему так проще. -->
+    <style name="Theme.Calendar" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:textSize">18sp</item>
+    </style>
+</resources>

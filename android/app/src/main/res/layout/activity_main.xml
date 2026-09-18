@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Все элементы — родные кнопки, тексты и списки: TalkBack читает их без
+     доработок, а мы не изобретаем собственные «доступные» виджеты. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <ScrollView
+        android:id="@+id/contentScroll"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/todayTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/today_title"
+                android:textSize="22sp"
+                android:textStyle="bold" />
+
+            <!-- Сводка. focusable + liveRegion: TalkBack прочитает её сам,
+                 как только она обновится после отметки. -->
+            <TextView
+                android:id="@+id/todayText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:accessibilityLiveRegion="polite"
+                android:focusable="true"
+                android:text="@string/today_hint"
+                android:textSize="20sp" />
+
+            <Button
+                android:id="@+id/btnStart"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:contentDescription="@string/btn_start_hint"
+                android:minHeight="56dp"
+                android:text="@string/btn_start" />
+
+            <Button
+                android:id="@+id/btnFinish"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:contentDescription="@string/btn_finish_hint"
+                android:minHeight="56dp"
+                android:text="@string/btn_finish" />
+
+            <Button
+                android:id="@+id/btnMonth"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:contentDescription="@string/btn_month_hint"
+                android:minHeight="56dp"
+                android:text="@string/btn_month" />
+
+            <Button
+                android:id="@+id/btnDiary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:contentDescription="@string/btn_diary_hint"
+                android:minHeight="56dp"
+                android:text="@string/btn_diary" />
+
+            <Button
+                android:id="@+id/btnSettings"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:contentDescription="@string/btn_settings_hint"
+                android:minHeight="56dp"
+                android:text="@string/btn_settings" />
+
+            <Button
+                android:id="@+id/btnHistory"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:contentDescription="@string/btn_history_hint"
+                android:minHeight="56dp"
+                android:text="@string/btn_history" />
+
+            <Button
+                android:id="@+id/btnNote"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:contentDescription="@string/btn_note_hint"
+                android:minHeight="56dp"
+                android:text="@string/btn_note" />
+        </LinearLayout>
+    </ScrollView>
+
+    <!-- Календарь месяца раскрывается на месте списка: строки читаются
+         свайпом, каждая строка — целая фраза про день. -->
+    <LinearLayout
+        android:id="@+id/monthPanel"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/monthTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:focusable="true"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <ListView
+            android:id="@+id/monthList"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btnPrevMonth"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:minHeight="56dp"
+                android:text="@string/month_prev" />
+
+            <Button
+                android:id="@+id/btnNextMonth"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:minHeight="56dp"
+                android:text="@string/month_next" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/btnBack"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="56dp"
+            android:text="@string/btn_back" />
+    </LinearLayout>
+
+</LinearLayout>

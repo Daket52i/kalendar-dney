@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Фон иконки приложения. Спокойный тёмный, чтобы белый календарь на нём
+         читался и в светлой, и в тёмной теме запуска. -->
+    <color name="ic_launcher_background">#5A2A4F</color>
+    <color name="ic_launcher_header">#E0725F</color>
+</resources>
