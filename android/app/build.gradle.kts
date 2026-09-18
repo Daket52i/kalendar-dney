@@ -13,7 +13,7 @@ android {
         minSdk = 24
         targetSdk = 34
         versionCode = 1
-        versionName = "0.1.0"
+        versionName = "1.0.0"
         ndk {
             // Реальные телефоны — ARM; x86_64 нужен только эмулятору и
             // втрое удлиняет сборку CPython.
@@ -21,9 +21,27 @@ android {
         }
     }
 
+    // Ключ подписи берётся из окружения и в репозитории не лежит: файл кладёт
+    // сборка на сервере из секретов. Если ключа нет — release собирается
+    // неподписанным, и это честнее, чем подписать случайным отладочным:
+    // обновление поверх такой версии поставить будет нельзя.
+    val keystorePath = System.getenv("ANDROID_KEYSTORE_FILE")
+    signingConfigs {
+        if (keystorePath != null && file(keystorePath).exists()) {
+            create("release") {
+                storeFile = file(keystorePath)
+                storeType = "PKCS12"
+                storePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("ANDROID_KEY_ALIAS")
+                keyPassword = System.getenv("ANDROID_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
+            signingConfigs.findByName("release")?.let { signingConfig = it }
         }
     }
     compileOptions {

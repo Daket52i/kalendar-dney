@@ -42,12 +42,30 @@ jobs:
       - name: Validate Gradle wrapper
         uses: gradle/actions/wrapper-validation@v3
 
-      - name: Build debug APK
-        run: ./gradlew --no-daemon assembleDebug
+      # Ключ подписи живёт в секретах репозитория одной строкой base64.
+      # Разворачиваем его во временный файл: в репозитории ключа нет и быть не
+      # должно, а один и тот же ключ от сборки к сборке нужен обязательно —
+      # иначе обновление не встанет поверх предыдущей версии.
+      - name: Развернуть ключ подписи
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "Секрет ANDROID_KEYSTORE_BASE64 не задан — соберём без подписи." >&2
+            exit 0
+          fi
+          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/cyclease.p12"
+          echo "ANDROID_KEYSTORE_FILE=$RUNNER_TEMP/cyclease.p12" >> "$GITHUB_ENV"
+          echo "ANDROID_KEYSTORE_PASSWORD=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" >> "$GITHUB_ENV"
+          echo "ANDROID_KEY_ALIAS=${{ secrets.ANDROID_KEY_ALIAS }}" >> "$GITHUB_ENV"
+          echo "ANDROID_KEY_PASSWORD=${{ secrets.ANDROID_KEY_PASSWORD }}" >> "$GITHUB_ENV"
+
+      - name: Build release APK
+        run: ./gradlew --no-daemon assembleRelease
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: calendar-debug
-          path: android/app/build/outputs/apk/debug/*.apk
+          name: kalendar-dney-apk
+          path: android/app/build/outputs/apk/release/*.apk
           if-no-files-found: error

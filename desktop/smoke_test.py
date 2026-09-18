@@ -18,6 +18,16 @@ from pathlib import Path
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
+# Консоль Windows умеет быть не в UTF-8, и тогда первый же русский текст в
+# выводе валит проверку ошибкой кодировки — обидно, когда проверка по сути
+# прошла. Просим UTF-8, а если поток его не принимает, теряем буквы, но не
+# результат.
+for stream in (sys.stdout, sys.stderr):
+    try:
+        stream.reconfigure(encoding="utf-8", errors="replace")
+    except (AttributeError, OSError, ValueError):
+        pass
+
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from PySide6.QtWidgets import QApplication  # noqa: E402

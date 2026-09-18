@@ -5,6 +5,13 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# Консоль сборщика на Windows по умолчанию не в UTF-8, и любой русский текст
+# в выводе валит проверку ошибкой кодировки. Это про сборку, а не про
+# приложение: строками в окне занимается Qt, ей кодировка консоли безразлична.
+env:
+  PYTHONUTF8: "1"
+  PYTHONIOENCODING: utf-8
+
 jobs:
   windows:
     runs-on: windows-latest
