@@ -113,4 +113,46 @@
     <string name="notify_text">Есть напоминание — открой приложение.</string>
     <string name="reminders_title">Ближайшие напоминания</string>
     <string name="reminders_empty">В ближайшие дни напоминаний нет.</string>
+
+    <!-- Люди: мама ведёт и свой календарь, и календарь дочери -->
+    <string name="btn_people">Люди</string>
+    <string name="btn_people_hint">Чей календарь открыт и как переключиться</string>
+    <string name="people_title">Люди</string>
+    <string name="people_hint">Здесь можно вести несколько календарей: свой и, например, дочки. У каждого свои отметки, дневник и напоминания — они не смешиваются. Переключиться можно в любой момент, данные при этом не теряются.</string>
+    <string name="people_now">Открыт календарь: %1$s</string>
+    <string name="people_only_one">Календарь пока один — %1$s. Второй можно добавить кнопкой «Добавить человека».</string>
+    <string name="people_all">Все календари: %1$s</string>
+    <string name="people_choose">Выбрать человека</string>
+    <string name="people_choose_hint">Откроется список — выбери, чей календарь вести</string>
+    <string name="people_choose_title">Чей календарь открыть</string>
+    <string name="people_current_mark">%1$s, открыт сейчас</string>
+    <string name="people_add">Добавить человека</string>
+    <string name="people_add_hint">Например, дочку — у неё будет свой отдельный календарь</string>
+    <string name="people_rename">Переименовать</string>
+    <string name="people_rename_hint">Поменять имя открытого человека</string>
+    <string name="people_remove">Убрать человека</string>
+    <string name="people_remove_hint">Стереть календарь вместе со всеми его записями</string>
+    <string name="people_back">Готово, назад к сегодняшнему дню</string>
+    <string name="people_name_hint">Имя</string>
+    <string name="people_add_title">Как зовут человека</string>
+    <string name="people_rename_title">Новое имя</string>
+    <string name="people_save_name">Сохранить</string>
+    <string name="people_cancel">Отмена</string>
+    <string name="people_opened">Открыт календарь: %1$s</string>
+    <string name="people_already">Календарь %1$s уже открыт.</string>
+    <string name="people_added">Добавлен новый календарь: %1$s. Он уже открыт, отметки и дневник теперь пишутся в него.</string>
+    <string name="people_renamed">Теперь человека зовут %1$s. Все отметки остались на месте.</string>
+    <string name="people_remove_title">Убрать человека</string>
+    <string name="people_remove_message">Календарь «%1$s» сотрётся вместе со всеми отметками, дневником и настройками. Вернуть их потом нельзя. Убрать?</string>
+    <string name="people_remove_yes">Убрать</string>
+    <string name="people_removed">Календарь «%1$s» убран. Открыт календарь: %2$s.</string>
+    <string name="error_people">Не получилось открыть список людей. Попробуй ещё раз.</string>
+
+    <!-- Первый запуск: единственный календарь сразу получает имя хозяйки -->
+    <string name="people_first_run_title">Как тебя зовут</string>
+    <string name="people_first_run_message">Имя нужно, чтобы приложение называло календарь твоим — и чтобы потом можно было завести второй, например для дочки.</string>
+    <string name="people_first_run_hint">Имя</string>
+    <string name="people_first_run_save">Сохранить</string>
+    <string name="people_first_run_later">Позже</string>
+    <string name="people_first_run_saved">Календарь теперь твой, %1$s.</string>
 </resources>

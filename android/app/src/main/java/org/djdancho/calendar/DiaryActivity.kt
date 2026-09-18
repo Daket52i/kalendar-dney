@@ -50,6 +50,11 @@ class DiaryActivity : AppCompatActivity() {
     /** Что уже записано за этот день: по нему заполняются поля. */
     private var current: JSONObject = JSONObject()
 
+    /** Чей дневник открыт. Дневник у каждого человека свой, и фразы обязаны
+     *  называть, о ком они, иначе два календаря на одном телефоне путаются. */
+    @Volatile
+    private var person: String = ""
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_diary)
@@ -117,8 +122,13 @@ class DiaryActivity : AppCompatActivity() {
     private fun load(announceDay: Boolean = true) {
         val day = Dates.iso(dayCursor)
         worker.execute {
+            person = try {
+                People.currentName(this)
+            } catch (e: Exception) {
+                ""
+            }
             try {
-                val label = engine.dayLabel(day)
+                val label = say(engine.dayLabel(day))
                 val record = engine.diaryDay(store.read(), day)
                 runOnUiThread {
                     current = record
@@ -133,6 +143,12 @@ class DiaryActivity : AppCompatActivity() {
             }
         }
     }
+
+    /** Фраза с именем открытого человека — правило живёт в Say и в ядре. */
+    private fun say(text: String): String = Say.text(engine, person, text)
+
+    /** Проговорить фразу, назвав человека. */
+    private fun sayAloud(text: String) = Speech.announce(this, say(text))
 
     private fun showFields(record: JSONObject) {
         // Списки выбора уже заполнены; если адаптер почему-то пуст, лучше
@@ -178,7 +194,7 @@ class DiaryActivity : AppCompatActivity() {
         // ошибиться вечером и не пустить в сегодняшний день.
         if (Dates.iso(next) > Dates.todayIso()) {
             // Записывать «наперёд» нечего: дневник — про то, что уже было.
-            Speech.announce(this, getString(R.string.diary_no_future))
+            sayAloud(getString(R.string.diary_no_future))
             return
         }
         dayCursor.time = next.time
@@ -197,7 +213,7 @@ class DiaryActivity : AppCompatActivity() {
         // читать нельзя.
         val temperature = temperature()
         if (temperature < 0) {
-            Speech.announce(this, getString(R.string.error_temperature))
+            sayAloud(getString(R.string.error_temperature))
             return
         }
 
@@ -218,10 +234,7 @@ class DiaryActivity : AppCompatActivity() {
             )
             val ok = store.write(saved)
             runOnUiThread {
-                Speech.announce(
-                    this,
-                    if (ok) getString(R.string.diary_saved) else getString(R.string.error_save)
-                )
+                sayAloud(if (ok) getString(R.string.diary_saved) else getString(R.string.error_save))
                 if (ok) load(announceDay = false)
             }
         }
@@ -250,12 +263,13 @@ class DiaryActivity : AppCompatActivity() {
             val cleared = engine.diaryClear(store.read(), day)
             val ok = store.write(cleared)
             runOnUiThread {
-                val phrase = when {
-                    !ok -> getString(R.string.error_save)
-                    wasEmpty -> getString(R.string.diary_nothing_to_clear)
-                    else -> getString(R.string.diary_cleared)
-                }
-                Speech.announce(this, phrase)
+                sayAloud(
+                    when {
+                        !ok -> getString(R.string.error_save)
+                        wasEmpty -> getString(R.string.diary_nothing_to_clear)
+                        else -> getString(R.string.diary_cleared)
+                    }
+                )
                 if (ok) load(announceDay = false)
             }
         }
@@ -265,8 +279,9 @@ class DiaryActivity : AppCompatActivity() {
 
     private fun showSummary() {
         worker.execute {
+            // Имя ставит ядро — в этом и смысл: одна фраза, одно правило.
             val text = try {
-                engine.diarySummary(store.read(), periods.read())
+                engine.diarySummary(store.read(), periods.read(), person)
             } catch (e: Exception) {
                 "Не получилось посчитать: ${e.message}"
             }
@@ -284,10 +299,14 @@ class DiaryActivity : AppCompatActivity() {
             } catch (e: Exception) {
                 listOf("Не получилось собрать записи: ${e.message}")
             }
+            // Имя — в заголовке списка, а не в каждой строке: строки листают
+            // свайпом подряд, и сорок «Настя» подряд слушать невозможно.
+            val title = say(getString(R.string.diary_list_title))
             runOnUiThread {
                 listLines.clear()
                 listLines.addAll(lines)
                 listAdapter.notifyDataSetChanged()
+                findViewById<TextView>(R.id.diaryListTitle).text = title
                 formScroll.visibility = View.GONE
                 listPanel.visibility = View.VISIBLE
                 findViewById<TextView>(R.id.diaryListTitle).requestFocus()

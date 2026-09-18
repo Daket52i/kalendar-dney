@@ -31,6 +31,12 @@
             android:name=".SettingsActivity"
             android:exported="false"
             android:label="@string/settings_title" />
+
+        <!-- Чей календарь ведётся: мама заводит и свой, и дочкин. -->
+        <activity
+            android:name=".PeopleActivity"
+            android:exported="false"
+            android:label="@string/people_title" />
     </application>
 
 </manifest>

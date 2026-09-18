@@ -33,20 +33,56 @@ object Reminders {
     private const val CHANNEL_ID = "reminders"
     private const val NOTIFICATION_ID = 1
 
-    /** Ключи, о которых уже сказали уведомлением. */
-    fun notified(context: Context): KeyStore = KeyStore(context, "notified.json")
+    /** Ключи, о которых уже сказали уведомлением. Файл у каждого свой. */
+    fun notified(context: Context, personId: String? = null): KeyStore =
+        KeyStore(context, "notified.json", personId)
 
     /** Ключи, которые уже проговорили голосом внутри приложения. */
-    fun spoken(context: Context): KeyStore = KeyStore(context, "spoken.json")
+    fun spoken(context: Context, personId: String? = null): KeyStore =
+        KeyStore(context, "spoken.json", personId)
 
-    /** Все напоминания, которые ядро считает на ближайшие дни. */
-    fun all(context: Context, engine: CycleEngine): List<Reminder> = engine.reminders(
-        PeriodStore(context).read(),
-        DiaryStore(context).read(),
-        Dates.todayIso(),
-        SettingsStore(context).read(),
-        HORIZON_DAYS
-    )
+    /**
+     * Все напоминания одного человека на ближайшие дни.
+     *
+     * Имя подставляется в каждое: на телефоне, где ведут два календаря,
+     * напоминание без имени не понять — «сегодня ожидаются месячные» одинаково
+     * звучит и про маму, и про дочь.
+     */
+    fun all(context: Context, engine: CycleEngine, person: Person): List<Reminder> =
+        engine.reminders(
+            PeriodStore(context, person.id).read(),
+            DiaryStore(context, person.id).read(),
+            Dates.todayIso(),
+            SettingsStore(context, person.id).read(),
+            HORIZON_DAYS,
+            person.name
+        )
+
+    /** Напоминания одного человека: кому они и что именно. */
+    data class Belonging(val person: Person, val reminders: List<Reminder>)
+
+    /**
+     * Напоминания всех людей сразу.
+     *
+     * Проверка идёт по всем календарям, а не только по открытому: мама должна
+     * получить напоминание про дочку и тогда, когда у неё открыт свой. Иначе
+     * второй календарь молчал бы, пока в него не переключатся, — то есть ровно
+     * тогда, когда он и нужен, он бы не работал.
+     *
+     * Сбой на одном человеке не отменяет остальных: испорченный файл у дочки
+     * не должен лишать маму её собственных напоминаний.
+     */
+    fun allByPerson(
+        context: Context,
+        engine: CycleEngine,
+        people: List<Person>
+    ): List<Belonging> = people.mapNotNull { person ->
+        try {
+            Belonging(person, all(context, engine, person))
+        } catch (e: Exception) {
+            null
+        }
+    }
 
     /**
      * Что уже пора показать: день наступил, час наступил, и об этом ещё не

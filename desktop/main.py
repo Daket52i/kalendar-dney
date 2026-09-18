@@ -25,7 +25,8 @@ for candidate in (_HERE / "core", _HERE.parent / "core", Path(getattr(sys, "_MEI
         sys.path.insert(0, str(candidate))
         break
 
-from cycle_core import engine  # noqa: E402
+from cycle_core import engine, phrases  # noqa: E402
+from cycle_core.people import Person  # noqa: E402
 from cycle_core.reminders import ReminderSettings  # noqa: E402
 
 from PySide6.QtCore import QDate, QRectF, QTimer, QUrl, Qt  # noqa: E402
@@ -51,6 +52,7 @@ from PySide6.QtWidgets import (  # noqa: E402
     QFormLayout,
     QGroupBox,
     QHBoxLayout,
+    QInputDialog,
     QLabel,
     QLineEdit,
     QListWidget,
@@ -194,6 +196,7 @@ class MainWindow(QMainWindow):
     def __init__(self, store: Store) -> None:
         super().__init__()
         self.store = store
+        self.person = store.person_name()
         self.periods = store.periods_text()
         self.records = store.records_text()
         self.settings = engine.settings_from_json(store.settings_text())
@@ -203,7 +206,6 @@ class MainWindow(QMainWindow):
         self.month_year = date.today().year
         self.month_number = date.today().month
 
-        self.setWindowTitle("Календарь дней")
         self.setWindowIcon(_app_icon())
         self.resize(760, 720)
 
@@ -212,6 +214,7 @@ class MainWindow(QMainWindow):
         self.tabs.addTab(self._build_calendar(), "Календарь")
         self.tabs.addTab(self._build_diary(), "Дневник")
         self.tabs.addTab(self._build_history(), "История")
+        self.tabs.addTab(self._build_people(), "Люди")
         self.tabs.addTab(self._build_settings(), "Настройки")
         self.setCentralWidget(self.tabs)
 
@@ -231,6 +234,11 @@ class MainWindow(QMainWindow):
             # трее и продолжает напоминать. Выход — только через «Выход» в
             # меню значка, и он закрывает всё разом.
             QApplication.instance().setQuitOnLastWindowClosed(False)
+
+        self.refresh_people_combo()
+        # Имя спрашиваем после того, как окно появилось: вопрос, заданный до
+        # этого, диктор может прочитать в пустоту.
+        QTimer.singleShot(300, self.ask_name_on_first_run)
 
     # -------------------------------------------------------------------- Трей
 
@@ -298,6 +306,13 @@ class MainWindow(QMainWindow):
         page = QWidget()
         layout = QVBoxLayout(page)
 
+        # Кто именно открыт — первой строкой экрана. Вслепую это единственный
+        # способ понять это, не уходя с вкладки: имя есть и в заголовке окна, но
+        # заголовок диктор читает только при переходе в программу.
+        self.today_person = QLabel()
+        self.today_person.setAccessibleName("Чей календарь открыт")
+        layout.addWidget(self.today_person)
+
         self.summary = QPlainTextEdit()
         self.summary.setReadOnly(True)
         self.summary.setAccessibleName("Сегодня")
@@ -330,12 +345,19 @@ class MainWindow(QMainWindow):
         layout.addStretch(1)
         return page
 
-    def say(self, text: str) -> None:
-        """Пишет в поле сообщения и переводит туда фокус — так диктор прочитает."""
-        self.message.setPlainText(text)
+    def say(self, text: str, signed: bool = False) -> None:
+        """Пишет в поле сообщения и переводит туда фокус — так диктор прочитает.
+
+        Имя человека подставляется здесь, в одной точке, а не в каждом вызове:
+        двадцать вызовов — это двадцать способов его забыть. `signed=True` —
+        для текста, который уже назвал человека сам (так приходят напоминания,
+        их собирает ядро).
+        """
+        spoken = text if signed else phrases.signed(self.person, text)
+        self.message.setPlainText(spoken)
         self.message.moveCursor(QTextCursor.MoveOperation.Start)
         self.message.setFocus()
-        _read_aloud(self.message, text)
+        _read_aloud(self.message, spoken)
 
     def mark_period_start(self) -> None:
         today = date.today().isoformat()
@@ -363,7 +385,195 @@ class MainWindow(QMainWindow):
         self.say("Отмечен последний день месячных. " + self._summary_line())
 
     def _summary_line(self) -> str:
-        return engine.summary(self.periods, date.today().isoformat())
+        return engine.summary(self.periods, date.today().isoformat(), self.person)
+
+    # ------------------------------------------------------------------ Люди
+
+    def _build_people(self) -> QWidget:
+        page = QWidget()
+        layout = QVBoxLayout(page)
+
+        selector = QGroupBox("Чей календарь открыт")
+        selector_layout = QVBoxLayout(selector)
+
+        self.people_combo = QComboBox()
+        self.people_combo.setAccessibleName("Выбрать человека")
+        self.people_combo.setMinimumHeight(40)
+        self.people_combo.currentIndexChanged.connect(self.switch_person_from_combo)
+        selector_layout.addWidget(self.people_combo)
+
+        hint = QLabel(
+            "Выбери человека в списке — и весь календарь, дневник и напоминания "
+            "переключатся на него. Свои отметки при этом никуда не денутся."
+        )
+        hint.setWordWrap(True)
+        selector_layout.addWidget(hint)
+        layout.addWidget(selector)
+
+        manage = QGroupBox("Добавить, переименовать, убрать")
+        manage_layout = QVBoxLayout(manage)
+
+        self.button_person_add = QPushButton("Добавить человека")
+        self.button_person_add.setMinimumHeight(44)
+        self.button_person_add.clicked.connect(self.add_person)
+        manage_layout.addWidget(self.button_person_add)
+
+        self.button_person_rename = QPushButton("Переименовать открытого человека")
+        self.button_person_rename.setMinimumHeight(44)
+        self.button_person_rename.clicked.connect(self.rename_person)
+        manage_layout.addWidget(self.button_person_rename)
+
+        self.button_person_remove = QPushButton("Убрать открытого человека вместе с данными")
+        self.button_person_remove.setMinimumHeight(44)
+        self.button_person_remove.clicked.connect(self.remove_person)
+        manage_layout.addWidget(self.button_person_remove)
+
+        layout.addWidget(manage)
+
+        self.people_view = QPlainTextEdit()
+        self.people_view.setReadOnly(True)
+        self.people_view.setAccessibleName("Что сейчас с календарями")
+        self.people_view.setMinimumHeight(90)
+        layout.addWidget(self.people_view)
+
+        layout.addStretch(1)
+        return page
+
+    def refresh_people_combo(self) -> None:
+        """Заполняет список людей, не считая это выбором пользователя."""
+        blocked = self.people_combo.blockSignals(True)
+        self.people_combo.clear()
+        current = self.store.person_id()
+        for person in self.store.people():
+            self.people_combo.addItem(person.name, person.id)
+        index = self.people_combo.findData(current)
+        if index >= 0:
+            self.people_combo.setCurrentIndex(index)
+        self.people_combo.blockSignals(blocked)
+
+        names = [person.name for person in self.store.people()]
+        if len(names) == 1:
+            self.people_view.setPlainText(
+                f"Календарь один: {names[0]}. Можно завести второй — например, "
+                "для дочери, — и переключаться между ними."
+            )
+        else:
+            self.people_view.setPlainText(
+                f"Календарей: {len(names)}. Открыт сейчас — {self.person}. "
+                "Всего: " + ", ".join(names) + "."
+            )
+
+    def switch_person_from_combo(self) -> None:
+        person_id = self.people_combo.currentData()
+        if person_id:
+            self.open_person(str(person_id))
+
+    def open_person(self, person_id: str) -> None:
+        """Переключает календарь целиком: отметки, дневник, настройки, напоминания."""
+        if person_id == self.store.person_id():
+            return
+        error = self.store.switch_person(person_id)
+        if error:
+            self.say(error)
+            self.refresh_people_combo()
+            return
+        self.reload_from_store()
+        self.say(f"Открыт календарь: {self.person}. {self._summary_line()}", signed=True)
+
+    def add_person(self) -> None:
+        name = self._ask_name("Как зовут человека, чей календарь завести?")
+        if not name:
+            return
+        error = self.store.add_person(name)
+        if error:
+            self.say(error)
+            return
+        self.reload_from_store()
+        self.say(
+            f"Заведён календарь: {self.person}. Он теперь открыт — отмечай дни, "
+            "они запишутся именно сюда."
+        )
+
+    def rename_person(self) -> None:
+        old = self.person
+        name = self._ask_name(f"Новое имя вместо «{old}»", old)
+        if not name or name == old:
+            return
+        error = self.store.rename_person(self.store.person_id(), name)
+        if error:
+            self.say(error)
+            return
+        self.reload_from_store()
+        self.say(
+            f"Теперь календарь называется {name}. Отметки, дневник и напоминания "
+            "остались на месте — менялось только имя."
+        )
+
+    def remove_person(self) -> None:
+        if len(self.store.people()) <= 1:
+            self.say(
+                "Это единственный календарь — убрать его нельзя, иначе показывать "
+                "будет нечего. Сначала заведи второй."
+            )
+            return
+        person = self.person
+        answer = QMessageBox.question(
+            self,
+            "Убрать календарь?",
+            f"Убрать календарь «{person}» вместе со всеми отметками и дневником? "
+            "Это навсегда, вернуть их будет нечем.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+        if answer != QMessageBox.StandardButton.Yes:
+            return
+        error = self.store.remove_person(self.store.person_id())
+        if error:
+            self.say(error)
+            return
+        self.reload_from_store()
+        self.say(f"Календарь «{person}» убран. Открыт календарь: {self.person}.")
+
+    def _ask_name(self, label: str, initial: str = "") -> str:
+        """Спрашивает имя. Пустая строка означает «передумала».
+
+        Годность имени здесь не проверяем: это дело ядра, и оно же скажет об
+        ошибке словами. Две проверки в двух местах разошлись бы.
+        """
+        name, accepted = QInputDialog.getText(self, "Имя", label, text=initial)
+        return name if accepted else ""
+
+    def ask_name_on_first_run(self) -> None:
+        """Первый запуск: спрашиваем, как зовут хозяйку календаря.
+
+        Спрашиваем именно именем, а не добавлением второго профиля: иначе рядом
+        с названным календарём навсегда осталось бы пустое «Я».
+        """
+        if not self.store.is_first_run():
+            return
+        name = self._ask_name(
+            "Как тебя зовут? Это имя будет в начале каждой фразы, чтобы всегда "
+            "было слышно, чей календарь открыт.",
+            self.person,
+        )
+        if not name:
+            return
+        error = self.store.rename_person(self.store.person_id(), name)
+        if error:
+            return
+        self.reload_from_store()
+        self.say(f"Запомнила: календарь подписан именем {name}.")
+
+    def reload_from_store(self) -> None:
+        """Читает всё заново — после смены человека или восстановления копии."""
+        self.person = self.store.person_name()
+        self.periods = self.store.periods_text()
+        self.records = self.store.records_text()
+        self.settings = engine.settings_from_json(self.store.settings_text())
+        self.shown = self.store.shown_keys()
+        self.setWindowTitle(f"Календарь дней — {self.person}")
+        self.refresh_people_combo()
+        self.refresh_all()
 
     # -------------------------------------------------------------- Календарь
 
@@ -420,7 +630,10 @@ class MainWindow(QMainWindow):
         self.refresh_month()
 
     def refresh_month(self) -> None:
-        title = f"{MONTHS_NOMINATIVE[self.month_number - 1]} {self.month_year}"
+        # Имя в заголовке, а не в каждой строке: сто строк с именем подряд
+        # превращают листание месяца в считалку. Заголовок диктор прочитает при
+        # входе на вкладку, а имя — первая строка экрана «Сегодня».
+        title = f"{self.person} — {MONTHS_NOMINATIVE[self.month_number - 1]} {self.month_year}"
         self.month_title.setText(title)
         lines = json.loads(
             engine.month(self.periods, date.today().isoformat(), self.month_year, self.month_number)
@@ -606,11 +819,13 @@ class MainWindow(QMainWindow):
         self.say(f"Запись за {_spoken(day)} убрана.")
 
     def show_diary_summary(self) -> None:
-        text = engine.diary_summary(self.records, self.periods)
-        self.say(text)
+        text = engine.diary_summary(self.records, self.periods, self.person)
+        self.say(text, signed=True)
 
     def refresh_diary_view(self) -> None:
-        self.diary_view.setPlainText(engine.diary_history(self.records, self.periods))
+        self.diary_view.setPlainText(
+            engine.diary_history(self.records, self.periods, person_name=self.person)
+        )
 
     # ------------------------------------------------------------------ История
 
@@ -832,6 +1047,7 @@ class MainWindow(QMainWindow):
                 date.today().isoformat(),
                 engine.settings_to_json(self.settings),
                 horizon_days=30,
+                person_name=self.person,
             )
         )
         if not items:
@@ -870,47 +1086,95 @@ class MainWindow(QMainWindow):
         except (OSError, UnicodeDecodeError, ValueError) as error:
             self.say(f"Копия не подошла: {error}")
             return
-        self.periods = self.store.periods_text()
-        self.records = self.store.records_text()
-        self.settings = engine.settings_from_json(self.store.settings_text())
-        self.refresh_all()
+        self.reload_from_store()
         self.say(report)
 
     # ------------------------------------------------------------ Напоминания
 
     def check_reminders(self) -> None:
-        """Показывает напоминания, время которых уже пришло."""
+        """Показывает напоминания, время которых уже пришло.
+
+        Проверка идёт по всем людям, а не только по открытому: мама должна
+        получить напоминание про дочку и тогда, когда у неё открыт свой
+        календарь. Иначе второй календарь молчал бы ровно тогда, когда он и
+        нужен, — и узнали бы об этом в самый неподходящий день.
+        """
         today = date.today().isoformat()
         hour = datetime.now().hour
+
+        for person in self.store.people():
+            try:
+                due = self._due_for(person, today, hour)
+            except Exception:
+                # Испорченный файл у одного человека не должен лишать
+                # напоминаний всех остальных.
+                continue
+            for item in due:
+                self._show_reminder(item["text"])
+
+    def _due_for(self, person: Person, today: str, hour: int) -> list[dict]:
+        """Должные напоминания одного человека. Показанные помечает сразу.
+
+        Про открытого берём то, что сейчас в окне: оно и есть самое свежее.
+        Про остальных читаем файлы — иначе свёрнутая в трей программа молчала
+        бы про дочку, пока в её календарь не переключатся.
+        """
+        opened = person.id == self.store.person_id()
+        if opened:
+            periods, records, shown = self.periods, self.records, self.shown
+            settings = engine.settings_to_json(self.settings)
+        else:
+            periods, records, raw_settings, shown = self.store.person_data(person.id)
+            settings = engine.settings_to_json(engine.settings_from_json(raw_settings))
+
         items = json.loads(
             engine.reminders_json(
-                self.periods,
-                self.records,
+                periods,
+                records,
                 today,
-                engine.settings_to_json(self.settings),
+                settings,
                 horizon_days=1,
+                person_name=person.name,
             )
         )
-        for item in items:
-            if item["key"] in self.shown or item["day"] != today or hour < item["hour"]:
-                continue
-            self.shown.add(item["key"])
-            self.store.save_shown(self.shown)
-            if not self.isVisible():
-                # Окно свёрнуто в трей: напоминание поднимает его обратно.
-                # Иначе окно с сообщением оказалось бы без родителя на экране,
-                # и диктор мог его не прочитать.
-                self._show_from_tray()
-            self.say(item["text"])
-            QMessageBox.information(self, "Напоминание", item["text"])
+        due = [
+            item
+            for item in items
+            if item["key"] not in shown and item["day"] == today and hour >= item["hour"]
+        ]
+        if due:
+            # Помечаем сразу: иначе следующая проверка через минуту сказала бы
+            # про то же самое ещё раз.
+            shown = shown | {item["key"] for item in due}
+            if opened:
+                self.shown = shown
+                self.store.save_shown(shown)
+            else:
+                self.store.save_shown_for(person.id, shown)
+        return due
+
+    def _show_reminder(self, text: str) -> None:
+        """Одно напоминание — голосом и окном."""
+        if not self.isVisible():
+            # Окно свёрнуто в трей: напоминание поднимает его обратно.
+            # Иначе окно с сообщением оказалось бы без родителя на экране,
+            # и диктор мог его не прочитать.
+            self._show_from_tray()
+        # Имя в напоминании уже стоит — его подставило ядро. На компьютере,
+        # где ведут два календаря, это единственное, что отличает «у Насти
+        # сегодня ожидаются месячные» от «у мамы».
+        self.say(text, signed=True)
+        QMessageBox.information(self, "Напоминание", text)
 
     # -------------------------------------------------------------- Обновление
 
     def refresh_all(self) -> None:
+        self.setWindowTitle(f"Календарь дней — {self.person}")
+        self.today_person.setText(f"Календарь: {self.person}")
         self.summary.setPlainText(self._summary_line())
         state = json.loads(engine.state(self.periods))
         self.button_period_end.setEnabled(bool(state["open"]))
-        self.history_view.setPlainText(engine.history(self.periods))
+        self.history_view.setPlainText(engine.history(self.periods, self.person))
         self.refresh_month()
         self.load_diary_day()
         self.refresh_diary_view()

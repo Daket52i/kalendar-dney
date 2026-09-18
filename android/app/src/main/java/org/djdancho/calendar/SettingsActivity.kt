@@ -39,6 +39,14 @@ class SettingsActivity : AppCompatActivity() {
     private val engine by lazy { CycleEngine(this) }
     private val worker = Executors.newSingleThreadExecutor()
 
+    /** Чей календарь открыт. Настройки напоминаний у каждого человека свои,
+     *  поэтому и фразы этого экрана обязаны называть, о ком они. */
+    @Volatile
+    private var person: String = ""
+
+    /** Проговорить фразу от имени открытого человека — через Say. */
+    private fun say(text: String) = Say.aloud(this, engine, person, text)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_settings)
@@ -72,6 +80,11 @@ class SettingsActivity : AppCompatActivity() {
 
     private fun load() {
         worker.execute {
+            person = try {
+                People.currentName(this)
+            } catch (e: Exception) {
+                ""
+            }
             val settings = try {
                 engine.settings(settingsStore.read())
             } catch (e: Exception) {
@@ -114,10 +127,7 @@ class SettingsActivity : AppCompatActivity() {
             val normalized = engine.settings(raw.toString())
             val ok = settingsStore.write(normalized.toString())
             runOnUiThread {
-                Speech.announce(
-                    this,
-                    if (ok) getString(R.string.settings_saved) else getString(R.string.error_save)
-                )
+                say(if (ok) getString(R.string.settings_saved) else getString(R.string.error_save))
                 // Проверку в фоне перезапускаем сразу: настройки могли
                 // выключить напоминания, и ждать следующего открытия нельзя.
                 ReminderScheduler.schedule(this)
@@ -134,7 +144,7 @@ class SettingsActivity : AppCompatActivity() {
         val raw = field.text.toString().trim()
         val value = raw.toIntOrNull()
         if (value == null || value < 0 || value > max) {
-            Speech.announce(this, getString(R.string.settings_range))
+            say(getString(R.string.settings_range))
             field.requestFocus()
             return null
         }
@@ -148,11 +158,13 @@ class SettingsActivity : AppCompatActivity() {
             val lines = try {
                 engine.reminderLines(
                     periods.read(), diary.read(), Dates.todayIso(),
-                    settingsStore.read(), UPCOMING_LIMIT
+                    settingsStore.read(), UPCOMING_LIMIT, person
                 )
             } catch (e: Exception) {
                 listOf("Не получилось посчитать: ${e.message}")
             }
+            // Каждая строка уже пришла из ядра с именем человека — поэтому
+            // список читается вслух как есть, без добавки в заголовке.
             runOnUiThread {
                 val text = if (lines.isEmpty()) getString(R.string.reminders_empty)
                 else lines.joinToString("\n")

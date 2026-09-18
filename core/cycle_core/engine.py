@@ -12,7 +12,7 @@ import calendar
 import json
 from datetime import date
 
-from . import diary, journal, phrases, predict, reminders
+from . import diary, journal, people as people_mod, phrases, predict, reminders
 from . import stats as stats_mod
 from .reminders import DEFAULT_HOUR, ReminderSettings
 
@@ -37,10 +37,81 @@ def _stats(periods: list):
     return stats_mod.compute(periods)
 
 
-def summary(periods_json: str, today_iso: str) -> str:
+def _people(people_json: str):
+    return people_mod.from_json(people_json)
+
+
+def _person_envelope(people, current: str, error: str = "") -> str:
+    """Один и тот же ответ на любое действие с людьми.
+
+    Не исключение и не голый список: Kotlin должен уметь показать неудачу
+    словами, а разбирать ради этого два разных случая — лишняя работа. Поле
+    `error` пустое, когда всё прошло.
+    """
+    person = people_mod.get(people, current)
+    return json.dumps(
+        {
+            "ok": not error,
+            "error": error,
+            "people": people_mod.to_json(people, current),
+            "current": current,
+            "name": person.name if person is not None else "",
+            "names": [item.name for item in people],
+        },
+        ensure_ascii=False,
+    )
+
+
+def people_json(people_json_raw: str) -> str:
+    """Список людей и кто выбран сейчас — с приведением к нормальному виду."""
+    people, current = _people(people_json_raw)
+    return _person_envelope(people, current)
+
+
+def person_add(people_json_raw: str, name: str) -> str:
+    """Заводит ещё один календарь и сразу делает его текущим: человек, которого
+    только что завели, — это тот, чьи данные сейчас начнут вносить."""
+    people, current = _people(people_json_raw)
+    try:
+        people, person = people_mod.add(people, name)
+    except ValueError as error:
+        return _person_envelope(people, current, str(error))
+    return _person_envelope(people, person.id)
+
+
+def person_rename(people_json_raw: str, person_id: str, name: str) -> str:
+    people, current = _people(people_json_raw)
+    try:
+        people = people_mod.rename(people, person_id, name)
+    except ValueError as error:
+        return _person_envelope(people, current, str(error))
+    return _person_envelope(people, current)
+
+
+def person_remove(people_json_raw: str, person_id: str) -> str:
+    """Убирает человека из списка. Файлы убирает оболочка — ядро их не видит."""
+    people, current = _people(people_json_raw)
+    try:
+        remaining = people_mod.remove(people, person_id)
+    except ValueError as error:
+        return _person_envelope(people, current, str(error))
+    return _person_envelope(remaining, people_mod.next_after_removal(people, current, person_id))
+
+
+def person_switch(people_json_raw: str, person_id: str) -> str:
+    """Переключает текущий календарь."""
+    people, current = _people(people_json_raw)
+    if people_mod.get(people, person_id) is None:
+        return _person_envelope(people, current, "Такого человека нет.")
+    return _person_envelope(people, person_id)
+
+
+def summary(periods_json: str, today_iso: str, person_name: str = "") -> str:
     """Главная строка — то, что приложение говорит при открытии."""
     periods = _periods(periods_json)
-    return phrases.today_summary(periods, _stats(periods), _day(today_iso))
+    return phrases.signed(
+        person_name, phrases.today_summary(periods, _stats(periods), _day(today_iso))
+    )
 
 
 def month(periods_json: str, today_iso: str, year: int, month_number: int) -> str:
@@ -55,9 +126,9 @@ def month(periods_json: str, today_iso: str, year: int, month_number: int) -> st
     return json.dumps(lines, ensure_ascii=False)
 
 
-def history(periods_json: str) -> str:
+def history(periods_json: str, person_name: str = "") -> str:
     """История циклов — то, что показывают врачу."""
-    return phrases.cycle_history(_periods(periods_json))
+    return phrases.signed(person_name, phrases.cycle_history(_periods(periods_json)))
 
 
 def mark_start(periods_json: str, day_iso: str) -> str:
@@ -146,9 +217,12 @@ def diary_clear(records_json: str, day_iso: str) -> str:
     return diary.to_json(kept)
 
 
-def diary_summary(records_json: str, periods_json: str) -> str:
+def diary_summary(records_json: str, periods_json: str, person_name: str = "") -> str:
     """Что видно по дневнику за всё время."""
-    return diary.symptom_summary(_records(records_json), _periods(periods_json))
+    return phrases.signed(
+        person_name,
+        diary.symptom_summary(_records(records_json), _periods(periods_json)),
+    )
 
 
 def diary_history_lines(records_json: str, periods_json: str, limit: int = 60) -> list[str]:
@@ -186,9 +260,13 @@ def diary_history_lines(records_json: str, periods_json: str, limit: int = 60) -
     return lines
 
 
-def diary_history(records_json: str, periods_json: str, limit: int = 60) -> str:
+def diary_history(
+    records_json: str, periods_json: str, limit: int = 60, person_name: str = ""
+) -> str:
     """Те же записи одной строкой — для тех, кто показывает их текстом."""
-    return "\n".join(diary_history_lines(records_json, periods_json, limit))
+    return phrases.signed(
+        person_name, "\n".join(diary_history_lines(records_json, periods_json, limit))
+    )
 
 
 def diary_history_json(records_json: str, periods_json: str, limit: int = 60) -> str:
@@ -231,8 +309,14 @@ def reminders_json(
     today_iso: str,
     settings_json: str = "{}",
     horizon_days: int = 30,
+    person_name: str = "",
 ) -> str:
-    """Напоминания на ближайшие дни — оболочка решает, как их показать."""
+    """Напоминания на ближайшие дни — оболочка решает, как их показать.
+
+    Имя человека подставляется в каждое напоминание. На телефоне, где ведут два
+    календаря, напоминание без имени — это напоминание не пойми кому: «сегодня
+    ожидаются месячные» одинаково звучит и про маму, и про дочь.
+    """
     periods = _periods(periods_json)
     settings = settings_from_json(settings_json)
     items = reminders.events(
@@ -249,9 +333,10 @@ def reminders_json(
                 "day": item.day.isoformat(),
                 "hour": item.hour,
                 "kind": item.kind,
-                "text": item.text,
+                "text": phrases.signed(person_name, item.text),
                 # Ключ для «уже показывали»: без него одно и то же напоминание
-                # всплывало бы при каждом запуске.
+                # всплывало бы при каждом запуске. Имя в ключ не входит — у
+                # каждого человека свой файл показанного, и склеить их нечему.
                 "key": f"{item.day.isoformat()}:{item.kind}",
             }
             for item in items
@@ -266,13 +351,17 @@ def reminders_lines(
     today_iso: str,
     settings_json: str = "{}",
     limit: int = 10,
+    person_name: str = "",
 ) -> str:
     """Ближайшие напоминания строками — то, что читается на экране настроек.
 
     Формулировку даёт phrases, а не оболочка: иначе телефон и компьютер
     сказали бы об одном и том же разными словами.
     """
-    items = json.loads(reminders_json(periods_json, records_json, today_iso, settings_json))
+    items = json.loads(
+        reminders_json(periods_json, records_json, today_iso, settings_json,
+                       person_name=person_name)
+    )
     lines = [
         phrases.reminder_line(date.fromisoformat(item["day"]), item["hour"], item["text"])
         for item in items[:limit]

@@ -45,9 +45,39 @@ class CycleEngine(context: Context) {
         Python.getInstance().getModule("cycle_core.engine")
     }
 
-    /** Сводка для экрана «Сегодня». */
-    fun summary(periodsJson: String, todayIso: String): String =
-        module.callAttr("summary", periodsJson, todayIso).toString()
+    // ---------- Люди ----------
+
+    /**
+     * Список людей и кто выбран сейчас. Ответ всегда одной формы: годный
+     * список, имя текущего и — если действие не прошло — ошибка словами.
+     */
+    fun people(document: String): JSONObject =
+        JSONObject(module.callAttr("people_json", document).toString())
+
+    fun personAdd(document: String, name: String): JSONObject =
+        JSONObject(module.callAttr("person_add", document, name).toString())
+
+    fun personRename(document: String, id: String, name: String): JSONObject =
+        JSONObject(module.callAttr("person_rename", document, id, name).toString())
+
+    fun personRemove(document: String, id: String): JSONObject =
+        JSONObject(module.callAttr("person_remove", document, id).toString())
+
+    fun personSwitch(document: String, id: String): JSONObject =
+        JSONObject(module.callAttr("person_switch", document, id).toString())
+
+    /**
+     * Ставит перед фразой имя человека.
+     *
+     * Правило живёт в ядре, а не здесь: иначе оно разошлось бы с версией для
+     * Windows, и одна из оболочек однажды заговорила бы безымянно.
+     */
+    fun signed(personName: String, text: String): String =
+        module.callAttr("signed", personName, text).toString()
+
+    /** Сводка для экрана «Сегодня». Имя человека — часть фразы, не украшение. */
+    fun summary(periodsJson: String, todayIso: String, personName: String): String =
+        module.callAttr("summary", periodsJson, todayIso, personName).toString()
 
     /** Дни месяца: по строке на день, каждая читается голосом целиком. */
     fun month(periodsJson: String, todayIso: String, year: Int, month: Int): List<String> {
@@ -57,8 +87,8 @@ class CycleEngine(context: Context) {
     }
 
     /** История циклов — то, что показывают врачу. */
-    fun history(periodsJson: String): String =
-        module.callAttr("history", periodsJson).toString()
+    fun history(periodsJson: String, personName: String): String =
+        module.callAttr("history", periodsJson, personName).toString()
 
     /** Отметка «начались». Возвращает новую историю. */
     fun markStart(periodsJson: String, dayIso: String): String =
@@ -113,19 +143,28 @@ class CycleEngine(context: Context) {
         core.callAttr("diary_clear", recordsJson, dayIso).toString()
 
     /** Записи списком, свежие сверху. */
-    fun diaryHistory(recordsJson: String, periodsJson: String): String =
-        core.callAttr("diary_history", recordsJson, periodsJson).toString()
+    fun diaryHistory(recordsJson: String, periodsJson: String, personName: String): String =
+        core.callAttr("diary_history", recordsJson, periodsJson, HISTORY_LIMIT, personName)
+            .toString()
 
-    /** То же списком по строкам: каждая запись — отдельная строка экрана. */
+    /**
+     * То же списком по строкам: каждая запись — отдельная строка экрана.
+     *
+     * Имени здесь нет намеренно: строки листают свайпом одну за другой, и
+     * «Настя» в начале каждой — это сорок одинаковых слов подряд. Имя несёт
+     * заголовок списка.
+     */
     fun diaryHistoryLines(recordsJson: String, periodsJson: String): List<String> {
-        val raw = core.callAttr("diary_history_json", recordsJson, periodsJson).toString()
+        val raw = core.callAttr(
+            "diary_history_json", recordsJson, periodsJson, HISTORY_LIMIT
+        ).toString()
         val array = JSONArray(raw)
         return (0 until array.length()).map { array.getString(it) }
     }
 
     /** Что видно по дневнику за всё время. */
-    fun diarySummary(recordsJson: String, periodsJson: String): String =
-        core.callAttr("diary_summary", recordsJson, periodsJson).toString()
+    fun diarySummary(recordsJson: String, periodsJson: String, personName: String): String =
+        core.callAttr("diary_summary", recordsJson, periodsJson, personName).toString()
 
     // ---------- Настройки и напоминания ----------
 
@@ -143,10 +182,12 @@ class CycleEngine(context: Context) {
         recordsJson: String,
         todayIso: String,
         settingsJson: String,
-        horizonDays: Int
+        horizonDays: Int,
+        personName: String
     ): List<Reminder> {
         val raw = core.callAttr(
-            "reminders_json", periodsJson, recordsJson, todayIso, settingsJson, horizonDays
+            "reminders_json", periodsJson, recordsJson, todayIso, settingsJson, horizonDays,
+            personName
         ).toString()
         val array = JSONArray(raw)
         return (0 until array.length()).map { index ->
@@ -166,12 +207,19 @@ class CycleEngine(context: Context) {
         recordsJson: String,
         todayIso: String,
         settingsJson: String,
-        limit: Int
+        limit: Int,
+        personName: String
     ): List<String> {
         val raw = core.callAttr(
-            "reminders_lines", periodsJson, recordsJson, todayIso, settingsJson, limit
+            "reminders_lines", periodsJson, recordsJson, todayIso, settingsJson, limit,
+            personName
         ).toString()
         val array = JSONArray(raw)
         return (0 until array.length()).map { array.getString(it) }
+    }
+
+    private companion object {
+        /** Сколько записей дневника показывать. Больше всё равно не листают. */
+        const val HISTORY_LIMIT = 60
     }
 }

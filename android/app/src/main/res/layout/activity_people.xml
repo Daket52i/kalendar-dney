@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Экран «Люди»: чей календарь открыт и как переключиться.
+     Всё — родные кнопки и тексты: TalkBack читает их без доработок. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/peopleTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/people_title"
+                android:textSize="22sp"
+                android:textStyle="bold" />
+
+            <!-- Живой регион: после переключения TalkBack прочитает новое имя
+                 сам, не дожидаясь, пока до строки дойдут свайпом. -->
+            <TextView
+                android:id="@+id/peopleNow"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:accessibilityLiveRegion="polite"
+                android:focusable="true"
+                android:textSize="20sp" />
+
+            <TextView
+                android:id="@+id/peopleHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/people_hint"
+                android:textSize="16sp" />
+
+            <Button
+                android:id="@+id/btnChoose"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:contentDescription="@string/people_choose_hint"
+                android:minHeight="56dp"
+                android:text="@string/people_choose" />
+
+            <Button
+                android:id="@+id/btnAdd"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:contentDescription="@string/people_add_hint"
+                android:minHeight="56dp"
+                android:text="@string/people_add" />
+
+            <Button
+                android:id="@+id/btnRename"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:contentDescription="@string/people_rename_hint"
+                android:minHeight="56dp"
+                android:text="@string/people_rename" />
+
+            <Button
+                android:id="@+id/btnRemove"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:contentDescription="@string/people_remove_hint"
+                android:minHeight="56dp"
+                android:text="@string/people_remove" />
+
+            <TextView
+                android:id="@+id/peopleList"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:textSize="18sp" />
+        </LinearLayout>
+    </ScrollView>
+
+    <Button
+        android:id="@+id/btnPeopleBack"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="56dp"
+        android:text="@string/people_back" />
+
+</LinearLayout>

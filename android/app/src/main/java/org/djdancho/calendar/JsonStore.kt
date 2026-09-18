@@ -8,6 +8,9 @@ import java.io.IOException
 /**
  * Один файл с данными внутри приложения: история, дневник, настройки.
  *
+ * Лежит в папке текущего человека. Файлы разных людей не пересекаются даже
+ * именами, поэтому мамина история не может попасть в дочкин прогноз.
+ *
  * Пишем через временный файл и переименование — если запись оборвётся
  * (телефон выключится), старая версия файла останется целой. Переименование
  * на некоторых прошивках не срабатывает, поэтому есть запасной путь: писать
@@ -15,24 +18,41 @@ import java.io.IOException
  *
  * Наружу ничего не уходит: у приложения нет даже разрешения на интернет.
  */
-class JsonStore(context: Context, private val fileName: String) {
+class JsonStore(
+    context: Context,
+    private val fileName: String,
+    private val personId: String? = null
+) {
 
-    private val file = File(context.filesDir, fileName)
-    private val temp = File(context.filesDir, "$fileName.tmp")
+    private val appContext = context.applicationContext
+
+    // Папку спрашиваем на каждое обращение, а не один раз при создании: человек
+    // может переключиться, и тогда открытый экран должен читать уже его файлы.
+    // Явный `personId` — для фоновой проверки, которая ходит по всем людям
+    // сразу и не имеет права смотреть на открытого.
+    private fun folder() =
+        if (personId == null) People.dir(appContext) else People.dirOf(appContext, personId)
+
+    private fun file() = File(folder(), fileName)
+
+    private fun temp() = File(folder(), "$fileName.tmp")
 
     /** Содержимое файла. Нет файла или он испорчен — пустой ответ. */
     fun readOr(empty: String): String = try {
-        if (file.exists()) file.readText() else empty
+        val target = file()
+        if (target.exists()) target.readText() else empty
     } catch (e: IOException) {
         empty
     }
 
     /** Записывает. Возвращает false, если записать не удалось. */
     fun write(json: String): Boolean = try {
-        temp.writeText(json)
-        if (!temp.renameTo(file)) {
-            file.writeText(json)
-            temp.delete()
+        val target = file()
+        val temporary = temp()
+        temporary.writeText(json)
+        if (!temporary.renameTo(target)) {
+            target.writeText(json)
+            temporary.delete()
         }
         true
     } catch (e: IOException) {
@@ -41,9 +61,9 @@ class JsonStore(context: Context, private val fileName: String) {
 }
 
 /** История отметок: тот же файл, что и раньше, — обновление ничего не теряет. */
-class PeriodStore(context: Context) {
+class PeriodStore(context: Context, personId: String? = null) {
 
-    private val store = JsonStore(context, "periods.json")
+    private val store = JsonStore(context, "periods.json", personId)
 
     fun read(): String = store.readOr("[]")
 
@@ -51,9 +71,9 @@ class PeriodStore(context: Context) {
 }
 
 /** Дневник самочувствия. Пустой файл — «[]», то есть ни одной записи. */
-class DiaryStore(context: Context) {
+class DiaryStore(context: Context, personId: String? = null) {
 
-    private val store = JsonStore(context, "diary.json")
+    private val store = JsonStore(context, "diary.json", personId)
 
     fun read(): String = store.readOr("[]")
 
@@ -61,9 +81,9 @@ class DiaryStore(context: Context) {
 }
 
 /** Настройки напоминаний. Пустой файл — «{}», то есть всё по умолчанию. */
-class SettingsStore(context: Context) {
+class SettingsStore(context: Context, personId: String? = null) {
 
-    private val store = JsonStore(context, "settings.json")
+    private val store = JsonStore(context, "settings.json", personId)
 
     fun read(): String = store.readOr("{}")
 
@@ -80,10 +100,13 @@ class SettingsStore(context: Context) {
  *
  * Старые ключи выбрасываем на каждой записи: иначе файл рос бы годами.
  * Даты в ISO сравниваются как строки, поэтому отбор простой.
+ *
+ * У каждого человека свой файл: «показывали Насте» и «показывали маме» — это
+ * два разных факта, и общий файл съедал бы напоминания одного другому.
  */
-class KeyStore(context: Context, fileName: String) {
+class KeyStore(context: Context, fileName: String, personId: String? = null) {
 
-    private val store = JsonStore(context, fileName)
+    private val store = JsonStore(context, fileName, personId)
 
     fun read(): Set<String> = try {
         val array = JSONArray(store.readOr("[]"))

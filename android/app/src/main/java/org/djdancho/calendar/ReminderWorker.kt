@@ -24,20 +24,32 @@ class ReminderWorker(context: Context, params: WorkerParameters) :
         return try {
             val today = Dates.todayIso()
             val cutoff = Dates.isoDaysAgo(Reminders.LOOK_BACK_DAYS)
-            val due = Reminders.due(
-                reminders = Reminders.all(context, CycleEngine(context)),
-                todayIso = today,
-                hour = Dates.hourNow(),
-                notBeforeIso = cutoff,
-                shown = Reminders.notified(context).read()
-            )
-            if (due.isNotEmpty()) {
-                Reminders.show(context)
-                // Помечаем все должные сразу: иначе следующая проверка через
-                // пятнадцать минут сообщила бы про то же самое ещё раз.
-                val store = Reminders.notified(context)
-                due.forEach { store.add(it.key, cutoff) }
-            }
+            val hour = Dates.hourNow()
+            val engine = CycleEngine(context)
+
+            // Проходим по всем календарям: у каждого свои отметки, настройки и
+            // свой файл «уже показывали». Хватает одного должного напоминания
+            // у кого угодно, чтобы показать уведомление.
+            var anythingDue = false
+            Reminders.allByPerson(context, engine, People.people(context, engine))
+                .forEach { belonging ->
+                    val store = Reminders.notified(context, belonging.person.id)
+                    val due = Reminders.due(
+                        reminders = belonging.reminders,
+                        todayIso = today,
+                        hour = hour,
+                        notBeforeIso = cutoff,
+                        shown = store.read()
+                    )
+                    if (due.isNotEmpty()) {
+                        anythingDue = true
+                        // Помечаем все должные сразу: иначе следующая проверка
+                        // через пятнадцать минут сообщила бы о том же снова.
+                        due.forEach { store.add(it.key, cutoff) }
+                    }
+                }
+
+            if (anythingDue) Reminders.show(context)
             Result.success()
         } catch (e: Exception) {
             // Ядро не поднялось или файл не прочитался — это не повод слать

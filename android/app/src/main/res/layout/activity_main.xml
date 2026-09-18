@@ -38,6 +38,18 @@
                 android:text="@string/today_hint"
                 android:textSize="20sp" />
 
+            <!-- Переключатель календарей стоит сразу под сводкой, выше отметок:
+                 чей календарь открыт — надо понимать до того, как поставишь
+                 отметку, а не после. -->
+            <Button
+                android:id="@+id/btnPeople"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:contentDescription="@string/btn_people_hint"
+                android:minHeight="56dp"
+                android:text="@string/btn_people" />
+
             <Button
                 android:id="@+id/btnStart"
                 android:layout_width="match_parent"
